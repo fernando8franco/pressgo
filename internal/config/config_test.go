@@ -217,3 +217,34 @@ func TestActivateCredential(t *testing.T) {
 		t.Errorf("Config mismatch.\nGot:  %+v\nWant: %+v", cfg, expected)
 	}
 }
+
+func TestGetCredential(t *testing.T) {
+	path := filepath.Join(t.TempDir(), configFileName)
+	cfg := Config{
+		Credentials: map[string]Credential{
+			"credential1": {Token: "abc-123", Status: false},
+			"credential2": {Token: "abc-456", Status: true},
+		},
+	}
+	expected := Credential{Token: "abc-456", Status: true}
+
+	credential := cfg.getCredential(path)
+	if !reflect.DeepEqual(expected, credential) {
+		t.Errorf("Credential mismatch.\nGot:  %+v\nWant: %+v", credential, expected)
+	}
+}
+
+func TestGetCredential_WithoutStatus(t *testing.T) {
+	path := filepath.Join(t.TempDir(), configFileName)
+	cfg := Config{
+		Credentials: map[string]Credential{
+			"credential1": {Token: "abc-123"},
+		},
+	}
+	expected := Credential{Token: "abc-123", Status: true}
+
+	credential := cfg.getCredential(path)
+	if !reflect.DeepEqual(expected, credential) {
+		t.Errorf("Credential mismatch.\nGot:  %+v\nWant: %+v", credential, expected)
+	}
+}

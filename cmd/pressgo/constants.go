@@ -8,10 +8,12 @@ const (
 	noInitFlag   = "no-init"
 	initFlag     = "init"
 
+	compressDir = "compress"
+
 	toolCompress = "compress"
 	region       = "us"
 
-	configFile    = "pressgo.config.json"
-	pdfExt        = ".pdf"
-	titleFilename = "base"
+	configFileName = "pressgo.config.json"
+	pdfExt         = ".pdf"
+	titleFilename  = "base"
 )

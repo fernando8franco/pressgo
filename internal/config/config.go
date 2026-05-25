@@ -213,38 +213,33 @@ func safeTruncate(s string, n int) string {
 	return s[:n]
 }
 
-// func (c *Config) GetKeyInfo() KeyInfo {
-// 	var foundKey string
+func (c *Config) getCredential(configFilePath string) Credential {
+	var id string
+	var foundKey string
 
-// 	for key, value := range c.Credentials {
-// 		if value.Status {
-// 			foundKey = key
-// 			break
-// 		}
-// 	}
+	for key, value := range c.Credentials {
+		if id == "" {
+			id = key
+		}
+		if value.Status {
+			foundKey = key
+			break
+		}
+	}
 
-// 	c.SetStatus(activeKey)
-// 	return c.APIKeys[activeKey]
-// }
+	if foundKey == "" {
+		c.activateCredential(configFilePath, id)
+		return c.Credentials[id]
+	}
 
-// func (c *Config) SetStatus(activeKey int) error {
-// 	for index := range c.APIKeys {
-// 		if index == activeKey {
-// 			c.APIKeys[index].Status = true
-// 		} else {
-// 			c.APIKeys[index].Status = false
-// 		}
-// 	}
-// 	return write(*c)
-// }
+	return c.Credentials[foundKey]
+}
 
-// func (c *Config) SetToken(key string, token string) error {
-// 	for i, k := range c.APIKeys {
-// 		if k.Key == key {
-// 			c.APIKeys[i].Token = token
-// 			break
-// 		}
-// 	}
+func (c *Config) GetCredential() (Credential, error) {
+	configFilePath, err := getConfigFilePath()
+	if err != nil {
+		return Credential{}, err
+	}
 
-// 	return write(*c)
-// }
+	return c.getCredential(configFilePath), nil
+}

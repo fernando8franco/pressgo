@@ -93,7 +93,7 @@ func addCredential(s *state, cmd command) (string, error) {
 		return "", fmt.Errorf("Error in validating the credential")
 	}
 
-	s.cfg.AddCredential(id, config.CreateCredential(key, token, credits))
+	err = s.cfg.AddCredential(id, config.CreateCredential(key, token, credits))
 	if err != nil {
 		return "", err
 	}
