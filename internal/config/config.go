@@ -194,13 +194,18 @@ func (c *Config) GetCredentials() [][]string {
 	}
 
 	slices.SortFunc(credentials, func(a, b []string) int {
-		if a[3] == b[3] {
-			return strings.Compare(a[0], b[0])
+		if a[3] != b[3] {
+			if a[3] == activeEmoji {
+				return -1
+			}
+			return 1
 		}
-		if a[3] == activeEmoji {
-			return -1
+		creditsA, _ := strconv.Atoi(a[2])
+		creditsB, _ := strconv.Atoi(b[2])
+		if creditsA != creditsB {
+			return creditsB - creditsA
 		}
-		return 1
+		return strings.Compare(a[0], b[0])
 	})
 
 	return credentials
@@ -216,6 +221,10 @@ func safeTruncate(s string, n int) string {
 func (c *Config) getCredential(configFilePath string) Credential {
 	var id string
 	var foundKey string
+
+	if len(c.Credentials) == 0 {
+		return Credential{}
+	}
 
 	for key, value := range c.Credentials {
 		if id == "" {
@@ -241,5 +250,10 @@ func (c *Config) GetCredential() (Credential, error) {
 		return Credential{}, err
 	}
 
-	return c.getCredential(configFilePath), nil
+	credential := c.getCredential(configFilePath)
+	if credential.Key == "" {
+		return Credential{}, fmt.Errorf("no credentials found")
+	}
+
+	return credential, nil
 }

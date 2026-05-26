@@ -10,6 +10,7 @@ const (
 
 	compressDir = "compress"
 
+	compressCost = 10
 	toolCompress = "compress"
 	region       = "us"
 

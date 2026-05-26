@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/fernando8franco/pressgo/pkg/pdfs"
@@ -18,6 +19,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	iloveapi "github.com/fernando8franco/i-love-api-golang"
+)
+
+var (
+	ErrInsufficientCredits = errors.New("insufficient credits for this operation")
 )
 
 func HandlerCompress(s *state, cmd command) error {
@@ -60,10 +65,6 @@ func HandlerCompress(s *state, cmd command) error {
 		return err
 	}
 
-	credential, err := s.cfg.GetCredential()
-	if err != nil {
-		return err
-	}
 	client := &http.Client{}
 	ila := iloveapi.NewClient(client)
 
@@ -72,92 +73,106 @@ func HandlerCompress(s *state, cmd command) error {
 	for range 3 {
 		wg.Go(func() error {
 			for pdf := range pdfsChannel {
-				fmt.Println("Compressing:", pdf.Filename)
+				err := func(pdf PDFsConfig) error {
+					fmt.Println("Compressing:", pdf.Filename)
 
-				startResponse, err := callWithRetry(credential.Key, ila, func() (iloveapi.StartResponse, error) {
-					return ila.Start(context.Background(), iloveapi.StartParams{Tool: toolCompress, Region: region})
-				})
-				if err != nil {
-					return err
-				}
-
-				pdfFile := filepath.Join(pdf.Path, pdf.Filename)
-				file, err := os.Open(pdfFile)
-				if err != nil {
-					return err
-				}
-				defer file.Close()
-
-				uploadResponse, err := callWithRetry(credential.Key, ila, func() (iloveapi.UploadResponse, error) {
-					return ila.Upload(context.Background(), iloveapi.UploadParams{
-						Server:   startResponse.Server,
-						Task:     startResponse.Task,
-						File:     file,
-						FileName: pdf.Filename,
+					startResponse, err := callWithRetry(s, ila, func() (iloveapi.StartResponse, error) {
+						return ila.Start(context.Background(), iloveapi.StartParams{Tool: toolCompress, Region: region})
 					})
-				})
-				if err != nil {
-					return err
-				}
-
-				_, err = callWithRetry(credential.Key, ila, func() (iloveapi.ProcessResponse, error) {
-					return ila.Process(context.Background(), iloveapi.ProcessParams{
-						Server: startResponse.Server,
-						Task:   startResponse.Task,
-						Tool:   toolCompress,
-						Files: []iloveapi.Files{
-							{
-								ServerFileName: uploadResponse.ServerFilename,
-								FileName:       pdf.Filename,
-							},
-						},
-						Meta: iloveapi.Meta{
-							Title:  pdf.Title,
-							Author: pdf.Author,
-						},
-					})
-				})
-				if err != nil {
-					return err
-				}
-
-				rel, err := filepath.Rel(s.wdir, pdf.Path)
-				if err != nil {
-					return err
-				}
-				compressPDFDirPath := filepath.Join(s.wdir, compressDir, rel)
-				if _, err := os.Stat(compressPDFDirPath); errors.Is(err, os.ErrNotExist) {
-					err := os.Mkdir(compressPDFDirPath, 0755)
 					if err != nil {
 						return err
 					}
-				}
-				compressPDFFilePath := filepath.Join(compressPDFDirPath, pdf.NewName)
-				out, err := os.Create(compressPDFFilePath)
-				if err != nil {
-					return err
-				}
-				defer out.Close()
+					if startResponse.RemainingCredits < compressCost {
+						startResponse, err = changeKey(s, ila, func() (iloveapi.StartResponse, error) {
+							return ila.Start(context.Background(), iloveapi.StartParams{Tool: toolCompress, Region: region})
+						})
+						if err != nil {
+							return err
+						}
+					}
 
-				dowloadResponse, err := callWithRetry(credential.Key, ila, func() (io.ReadCloser, error) {
-					return ila.Download(context.Background(), iloveapi.DowloadParams{
-						Server: startResponse.Server,
-						Task:   startResponse.Task,
+					pdfFile := filepath.Join(pdf.Path, pdf.Filename)
+					file, err := os.Open(pdfFile)
+					if err != nil {
+						return err
+					}
+					defer file.Close()
+
+					uploadResponse, err := callWithRetry(s, ila, func() (iloveapi.UploadResponse, error) {
+						return ila.Upload(context.Background(), iloveapi.UploadParams{
+							Server:   startResponse.Server,
+							Task:     startResponse.Task,
+							File:     file,
+							FileName: pdf.Filename,
+						})
 					})
-				})
+					if err != nil {
+						return err
+					}
+
+					_, err = callWithRetry(s, ila, func() (iloveapi.ProcessResponse, error) {
+						return ila.Process(context.Background(), iloveapi.ProcessParams{
+							Server: startResponse.Server,
+							Task:   startResponse.Task,
+							Tool:   toolCompress,
+							Files: []iloveapi.Files{
+								{
+									ServerFileName: uploadResponse.ServerFilename,
+									FileName:       pdf.Filename,
+								},
+							},
+							Meta: iloveapi.Meta{
+								Title:  pdf.Title,
+								Author: pdf.Author,
+							},
+						})
+					})
+					if err != nil {
+						return err
+					}
+
+					rel, err := filepath.Rel(s.wdir, pdf.Path)
+					if err != nil {
+						return err
+					}
+					compressPDFDirPath := filepath.Join(s.wdir, compressDir, rel)
+					if _, err := os.Stat(compressPDFDirPath); errors.Is(err, os.ErrNotExist) {
+						err := os.Mkdir(compressPDFDirPath, 0755)
+						if err != nil {
+							return err
+						}
+					}
+					compressPDFFilePath := filepath.Join(compressPDFDirPath, pdf.NewName)
+					out, err := os.Create(compressPDFFilePath)
+					if err != nil {
+						return err
+					}
+					defer out.Close()
+
+					dowloadResponse, err := callWithRetry(s, ila, func() (io.ReadCloser, error) {
+						return ila.Download(context.Background(), iloveapi.DowloadParams{
+							Server: startResponse.Server,
+							Task:   startResponse.Task,
+						})
+					})
+					if err != nil {
+						return err
+					}
+					defer dowloadResponse.Close()
+
+					_, err = io.Copy(out, dowloadResponse)
+					if err != nil {
+						return err
+					}
+
+					fmt.Println(pdf.Filename, "--- Compressed correctly")
+					return nil
+				}(pdf)
+
 				if err != nil {
 					return err
 				}
-				defer dowloadResponse.Close()
-
-				_, err = io.Copy(out, dowloadResponse)
-				if err != nil {
-					return err
-				}
-
-				fmt.Println(pdf.Filename, "--- Compressed correctly")
 			}
-
 			return nil
 		})
 	}
@@ -165,19 +180,15 @@ func HandlerCompress(s *state, cmd command) error {
 	go func() {
 		defer close(pdfsChannel)
 		for _, info := range pdfs {
-			// filePath := filepath.Join(info.Path, info.Filename)
-			// if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
-			// 	continue
-			// }
 			pdfsChannel <- info
 		}
 	}()
 
 	if err := wg.Wait(); err != nil {
 		return err
-	} else {
-		fmt.Println("All pdfs were compressed correctly")
 	}
+
+	fmt.Println("All pdfs were compressed correctly")
 
 	err = os.Remove(cfgFile)
 	if err != nil {
@@ -187,7 +198,7 @@ func HandlerCompress(s *state, cmd command) error {
 	return nil
 }
 
-func callWithRetry[T any](key string, ila *iloveapi.Client, apiFunc func() (T, error)) (T, error) {
+func callWithRetry[T any](s *state, ila *iloveapi.Client, apiFunc func() (T, error)) (T, error) {
 	response, err := apiFunc()
 	if err == nil {
 		return response, nil
@@ -196,7 +207,12 @@ func callWithRetry[T any](key string, ila *iloveapi.Client, apiFunc func() (T, e
 	var apiErr *iloveapi.APIError
 	if errors.As(err, &apiErr) {
 		if apiErr.StatusCode() == 401 {
-			refreshErr := ila.GenerateToken(context.Background(), key)
+			credential, err := s.cfg.GetCredential()
+			if err != nil {
+				var zero T
+				return zero, err
+			}
+			refreshErr := ila.GenerateToken(context.Background(), credential.Key)
 			if refreshErr != nil {
 				var zero T
 				return zero, fmt.Errorf("failed to refresh token: %w", refreshErr)
@@ -207,6 +223,36 @@ func callWithRetry[T any](key string, ila *iloveapi.Client, apiFunc func() (T, e
 	}
 
 	return response, err
+}
+
+func changeKey(s *state, ila *iloveapi.Client, startFunc func() (iloveapi.StartResponse, error)) (iloveapi.StartResponse, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	credentials := s.cfg.GetCredentials()
+	if len(credentials) < 1 {
+		return iloveapi.StartResponse{}, ErrInsufficientCredits
+	}
+
+	credits, _ := strconv.Atoi(credentials[1][2])
+	if credits < compressCost {
+		return iloveapi.StartResponse{}, ErrInsufficientCredits
+	}
+
+	key := credentials[1][1]
+	s.cfg.ActivateCredential(key)
+
+	refreshErr := ila.GenerateToken(context.Background(), key)
+	if refreshErr != nil {
+		return iloveapi.StartResponse{}, fmt.Errorf("failed to refresh token: %w", refreshErr)
+	}
+
+	startReponse, err := startFunc()
+	if err != nil {
+		return iloveapi.StartResponse{}, err
+	}
+
+	return startReponse, nil
 }
 
 func initConfig(s *state, cmd command, cfgFile string) error {
