@@ -106,22 +106,22 @@ func Read() (Config, error) {
 	return cfg, nil
 }
 
-func (c *Config) addCredential(configFilePath, id string, credentials Credential) error {
+func (c *Config) addCredential(configFilePath, id string, credential Credential) error {
 	if len(c.Credentials) == 0 {
-		credentials.Status = true
+		credential.Status = true
 	}
 
-	c.Credentials[id] = credentials
+	c.Credentials[id] = credential
 	return write(configFilePath, *c)
 }
 
-func (c *Config) AddCredential(id string, credentials Credential) error {
+func (c *Config) AddCredential(id string, credential Credential) error {
 	configFilePath, err := getConfigFilePath()
 	if err != nil {
 		return err
 	}
 
-	return c.addCredential(configFilePath, id, credentials)
+	return c.addCredential(configFilePath, id, credential)
 }
 
 func (c *Config) deleteCredential(configFilePath, id string) error {
@@ -218,18 +218,14 @@ func safeTruncate(s string, n int) string {
 	return s[:n]
 }
 
-func (c *Config) getCredential(configFilePath string) Credential {
-	var id string
+func (c *Config) GetCredential() (string, Credential, error) {
 	var foundKey string
 
 	if len(c.Credentials) == 0 {
-		return Credential{}
+		return "", Credential{}, fmt.Errorf("no credentials found")
 	}
 
 	for key, value := range c.Credentials {
-		if id == "" {
-			id = key
-		}
 		if value.Status {
 			foundKey = key
 			break
@@ -237,23 +233,8 @@ func (c *Config) getCredential(configFilePath string) Credential {
 	}
 
 	if foundKey == "" {
-		c.activateCredential(configFilePath, id)
-		return c.Credentials[id]
+		return "", Credential{}, fmt.Errorf("no active credential found")
 	}
 
-	return c.Credentials[foundKey]
-}
-
-func (c *Config) GetCredential() (Credential, error) {
-	configFilePath, err := getConfigFilePath()
-	if err != nil {
-		return Credential{}, err
-	}
-
-	credential := c.getCredential(configFilePath)
-	if credential.Key == "" {
-		return Credential{}, fmt.Errorf("no credentials found")
-	}
-
-	return credential, nil
+	return foundKey, c.Credentials[foundKey], nil
 }

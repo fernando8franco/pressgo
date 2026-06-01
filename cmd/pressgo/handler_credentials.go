@@ -102,8 +102,8 @@ func addCredential(s *state, cmd command) (string, error) {
 }
 
 func validateCredential(s *state, key string) (string, int, error) {
-	api := iloveapi.NewClient(s.client)
-	err := api.GenerateToken(context.Background(), key)
+	api := iloveapi.NewClient(s.client, key, "")
+	err := api.GenerateToken(context.Background())
 	if err != nil {
 		return "", 0, err
 	}

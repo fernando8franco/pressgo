@@ -219,32 +219,38 @@ func TestActivateCredential(t *testing.T) {
 }
 
 func TestGetCredential(t *testing.T) {
-	path := filepath.Join(t.TempDir(), configFileName)
 	cfg := Config{
 		Credentials: map[string]Credential{
 			"credential1": {Token: "abc-123", Status: false},
 			"credential2": {Token: "abc-456", Status: true},
 		},
 	}
+	expectedKey := "credential2"
 	expected := Credential{Token: "abc-456", Status: true}
 
-	credential := cfg.getCredential(path)
+	key, credential, err := cfg.GetCredential()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if key != expectedKey {
+		t.Errorf("Credential key mismatch.\nGot:  %+v\nWant: %+v", key, expectedKey)
+	}
+
 	if !reflect.DeepEqual(expected, credential) {
 		t.Errorf("Credential mismatch.\nGot:  %+v\nWant: %+v", credential, expected)
 	}
 }
 
 func TestGetCredential_WithoutStatus(t *testing.T) {
-	path := filepath.Join(t.TempDir(), configFileName)
 	cfg := Config{
 		Credentials: map[string]Credential{
 			"credential1": {Token: "abc-123"},
 		},
 	}
-	expected := Credential{Token: "abc-123", Status: true}
 
-	credential := cfg.getCredential(path)
-	if !reflect.DeepEqual(expected, credential) {
-		t.Errorf("Credential mismatch.\nGot:  %+v\nWant: %+v", credential, expected)
+	_, _, err := cfg.GetCredential()
+	if err == nil {
+		t.Errorf("Expected an error for negative input, but got nil")
 	}
 }
