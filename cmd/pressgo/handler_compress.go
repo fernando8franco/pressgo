@@ -210,10 +210,10 @@ func callWithRetry[T any](s *state, ila *iloveapi.Client, apiFunc func() (T, err
 	var apiErr *iloveapi.APIError
 	if errors.As(err, &apiErr) {
 		if apiErr.StatusCode() == 401 {
-			refreshErr := ila.GenerateToken(context.Background())
-			if refreshErr != nil {
+			err := ila.GenerateToken(context.Background())
+			if err != nil {
 				var zero T
-				return zero, fmt.Errorf("failed to refresh token: %w", refreshErr)
+				return zero, fmt.Errorf("failed to refresh token: %w", err)
 			}
 
 			token := ila.GetToken()
