@@ -217,7 +217,8 @@ func callWithRetry[T any](s *state, ila *iloveapi.Client, apiFunc func() (T, err
 				return zero, fmt.Errorf("failed to refresh token: %w", err)
 			}
 
-			// token := ila.GetToken()
+			token := ila.GetToken()
+			fmt.Println(token)
 
 			return apiFunc()
 		}

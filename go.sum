@@ -24,6 +24,10 @@ github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603182829-2cfb88c6bad
 github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603182829-2cfb88c6bad5/go.mod h1:c8FNGEo95w4UhJEMkyQAEOqF+0YxOgga+12iyst9qbo=
 github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603190211-cf6694414aeb h1:Jyl7kLGWXp2frLZyWQgT397LoKc1t1p+SODzsizkeok=
 github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603190211-cf6694414aeb/go.mod h1:RewRVwzghjj7XnBF2JNzm5yF74QBgGCXJMBGCI2WNT4=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603204800-33fdc9da37cd h1:M9ULGWR0bTVThBBLfqA/epc4ZQZ0L/wNNM8/B02MPNc=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603204800-33fdc9da37cd/go.mod h1:RewRVwzghjj7XnBF2JNzm5yF74QBgGCXJMBGCI2WNT4=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603205119-ef5ec49d4483 h1:BYggTg+Zm7j3xIW+xR2EYfYe2p/C0B8Is2mUpU2wAmM=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603205119-ef5ec49d4483/go.mod h1:RewRVwzghjj7XnBF2JNzm5yF74QBgGCXJMBGCI2WNT4=
 github.com/mattn/go-colorable v0.1.14 h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHPsaIE=
 github.com/mattn/go-colorable v0.1.14/go.mod h1:6LmQG8QLFO4G5z1gPvYEzlUgJ2wF+stgPZH1UqBm1s8=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=

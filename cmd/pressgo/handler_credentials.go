@@ -113,7 +113,7 @@ func validateCredential(s *state, key string) (string, int, error) {
 		return "", 0, err
 	}
 
-	return api.GetToken(), start.RemainingCredits, nil
+	return api.GetToken(), start.RemainingFiles, nil
 }
 
 func deleteCredential(s *state, cmd command) (string, error) {

@@ -3,7 +3,7 @@ module github.com/fernando8franco/pressgo
 go 1.25.6
 
 require (
-	github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603190211-cf6694414aeb
+	github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603205119-ef5ec49d4483
 	github.com/olekukonko/tablewriter v1.1.4
 	golang.org/x/sync v0.20.0
 	gopkg.in/Regis24GmbH/go-diacritics.v2 v2.0.3
