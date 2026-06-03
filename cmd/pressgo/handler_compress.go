@@ -65,11 +65,12 @@ func HandlerCompress(s *state, cmd command) error {
 	}
 
 	client := &http.Client{}
-	_, credential, err := s.cfg.GetCredential()
+	credential, err := s.cfg.GetCredential()
 	if err != nil {
 		return err
 	}
-	ila := iloveapi.NewClient(client, credential.Key, credential.Token)
+	ila := iloveapi.NewClient(client, credential.Key)
+	ila.SetToken(credential.Token)
 
 	pdfsChannel := make(chan PDFsConfig)
 	var wg errgroup.Group
@@ -216,8 +217,7 @@ func callWithRetry[T any](s *state, ila *iloveapi.Client, apiFunc func() (T, err
 				return zero, fmt.Errorf("failed to refresh token: %w", err)
 			}
 
-			token := ila.GetToken()
-			fmt.Println(token)
+			// token := ila.GetToken()
 
 			return apiFunc()
 		}

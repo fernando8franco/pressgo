@@ -93,7 +93,7 @@ func addCredential(s *state, cmd command) (string, error) {
 		return "", fmt.Errorf("Error in validating the credential")
 	}
 
-	err = s.cfg.AddCredential(id, config.CreateCredential(key, token, credits))
+	err = s.cfg.AddCredential(config.Credential{ID: id, Key: key, Token: token, Credits: credits})
 	if err != nil {
 		return "", err
 	}
@@ -102,7 +102,7 @@ func addCredential(s *state, cmd command) (string, error) {
 }
 
 func validateCredential(s *state, key string) (string, int, error) {
-	api := iloveapi.NewClient(s.client, key, "")
+	api := iloveapi.NewClient(s.client, key)
 	err := api.GenerateToken(context.Background())
 	if err != nil {
 		return "", 0, err

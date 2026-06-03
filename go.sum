@@ -16,6 +16,14 @@ github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260601193711-531dd24e150
 github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260601193711-531dd24e150d/go.mod h1:RewRVwzghjj7XnBF2JNzm5yF74QBgGCXJMBGCI2WNT4=
 github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260601194320-33cfb27b69e6 h1:CCDo/XeI9Vf1gg4Oc3g7LbYDTPbbH+DrEZHVqc9f6Ys=
 github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260601194320-33cfb27b69e6/go.mod h1:RewRVwzghjj7XnBF2JNzm5yF74QBgGCXJMBGCI2WNT4=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260602162409-bffa029aeaa8 h1:/IgL1MykFp95ScTKKfIM1DrPPbDwtmcL0iJQscZZ0KE=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260602162409-bffa029aeaa8/go.mod h1:c8FNGEo95w4UhJEMkyQAEOqF+0YxOgga+12iyst9qbo=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260602163449-9e4e5a19bcc5 h1:JQ15pyEOjDX2d26xDWmGYQ8MKfmj+3Q9nf6IDy1oxYQ=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260602163449-9e4e5a19bcc5/go.mod h1:c8FNGEo95w4UhJEMkyQAEOqF+0YxOgga+12iyst9qbo=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603182829-2cfb88c6bad5 h1:czBq+R6TeMnr2R8MQtFS0G2qtPOFiJ+ZV4yA51Ri4ok=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603182829-2cfb88c6bad5/go.mod h1:c8FNGEo95w4UhJEMkyQAEOqF+0YxOgga+12iyst9qbo=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603190211-cf6694414aeb h1:Jyl7kLGWXp2frLZyWQgT397LoKc1t1p+SODzsizkeok=
+github.com/fernando8franco/i-love-api-golang v0.1.3-0.20260603190211-cf6694414aeb/go.mod h1:RewRVwzghjj7XnBF2JNzm5yF74QBgGCXJMBGCI2WNT4=
 github.com/mattn/go-colorable v0.1.14 h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHPsaIE=
 github.com/mattn/go-colorable v0.1.14/go.mod h1:6LmQG8QLFO4G5z1gPvYEzlUgJ2wF+stgPZH1UqBm1s8=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
@@ -36,6 +44,8 @@ github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKs
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 golang.org/x/sync v0.18.0 h1:kr88TuHDroi+UVf+0hZnirlk8o8T+4MrK6mr60WkH/I=
 golang.org/x/sync v0.18.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
+golang.org/x/sync v0.20.0 h1:e0PTpb7pjO8GAtTs2dQ6jYa5BWYlMuX047Dco/pItO4=
+golang.org/x/sync v0.20.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
 golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.30.0 h1:QjkSwP/36a20jFYWkSue1YwXzLmsV5Gfq7Eiy72C1uc=
 golang.org/x/sys v0.30.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=

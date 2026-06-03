@@ -1,6 +1,7 @@
 package config
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,7 +9,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -19,23 +19,15 @@ const (
 )
 
 type Config struct {
-	Credentials map[string]Credential `json:"credentials"`
+	Credentials []Credential `json:"credentials"`
 }
 
 type Credential struct {
+	ID      string `json:"id"`
 	Key     string `json:"key"`
 	Token   string `json:"token"`
 	Credits int    `json:"credits"`
 	Status  bool   `json:"status"`
-}
-
-func CreateCredential(key, token string, credits int) Credential {
-	return Credential{
-		Key:     key,
-		Token:   token,
-		Credits: credits,
-		Status:  false,
-	}
 }
 
 func getConfigFilePath() (string, error) {
@@ -48,7 +40,36 @@ func getConfigFilePath() (string, error) {
 	return configFilePath, nil
 }
 
+func sortCredentials(credentials []Credential) {
+	slices.SortFunc(credentials, func(a, b Credential) int {
+		if a.Status != b.Status {
+			if a.Status {
+				return -1
+			}
+			return 1
+		}
+
+		if a.Credits != b.Credits {
+			return cmp.Compare(b.Credits, a.Credits)
+		}
+
+		return cmp.Compare(a.ID, b.ID)
+	})
+}
+
+func verifyStatus(credentials []Credential) {
+	for i := 0; i < len(credentials); i++ {
+		credentials[i].Status = false
+		if i == 0 {
+			credentials[0].Status = true
+		}
+	}
+}
+
 func write(configFilePath string, cfg Config) error {
+	verifyStatus(cfg.Credentials)
+	sortCredentials(cfg.Credentials)
+
 	dir := filepath.Dir(configFilePath)
 	if _, err := os.Stat(dir); err != nil && errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(dir, 0755)
@@ -75,7 +96,7 @@ func write(configFilePath string, cfg Config) error {
 
 func read(configFilePath string) (Config, error) {
 	if _, err := os.Stat(configFilePath); err != nil && errors.Is(err, os.ErrNotExist) {
-		write(configFilePath, Config{Credentials: map[string]Credential{}})
+		write(configFilePath, Config{Credentials: []Credential{}})
 	}
 
 	jsonFile, err := os.Open(configFilePath)
@@ -106,35 +127,31 @@ func Read() (Config, error) {
 	return cfg, nil
 }
 
-func (c *Config) addCredential(configFilePath, id string, credential Credential) error {
-	if len(c.Credentials) == 0 {
-		credential.Status = true
-	}
-
-	c.Credentials[id] = credential
+func (c *Config) addCredential(configFilePath string, credential Credential) error {
+	credential.Status = false
+	c.Credentials = append(c.Credentials, credential)
 	return write(configFilePath, *c)
 }
 
-func (c *Config) AddCredential(id string, credential Credential) error {
+func (c *Config) AddCredential(credential Credential) error {
 	configFilePath, err := getConfigFilePath()
 	if err != nil {
 		return err
 	}
 
-	return c.addCredential(configFilePath, id, credential)
+	return c.addCredential(configFilePath, credential)
 }
 
 func (c *Config) deleteCredential(configFilePath, id string) error {
-	if _, ok := c.Credentials[id]; !ok {
+	index := slices.IndexFunc(c.Credentials, func(crd Credential) bool {
+		return crd.ID == id
+	})
+	if index == -1 {
 		return fmt.Errorf("The credential id doesn't exist")
 	}
-	delete(c.Credentials, id)
 
-	for key, value := range c.Credentials {
-		value.Status = true
-		c.Credentials[key] = value
-		break
-	}
+	c.Credentials = slices.Delete(c.Credentials, index, index+1)
+
 	return write(configFilePath, *c)
 }
 
@@ -148,17 +165,18 @@ func (c *Config) DeleteCredential(id string) error {
 }
 
 func (c *Config) activateCredential(configFilePath, id string) error {
-	if _, ok := c.Credentials[id]; !ok {
+	index := slices.IndexFunc(c.Credentials, func(crd Credential) bool {
+		return crd.ID == id
+	})
+	if index == -1 {
 		return fmt.Errorf("The credential id doesn't exist")
 	}
 
-	for key, value := range c.Credentials {
-		value.Status = false
-		if key == id {
-			value.Status = true
-		}
-		c.Credentials[key] = value
-	}
+	c.Credentials[index].Status = true
+
+	aux := c.Credentials[index]
+	c.Credentials[index] = c.Credentials[0]
+	c.Credentials[0] = aux
 
 	return write(configFilePath, *c)
 }
@@ -172,41 +190,21 @@ func (c *Config) ActivateCredential(id string) error {
 	return c.activateCredential(configFilePath, id)
 }
 
-type CredentialWithID struct {
-	ID string
-	Credential
-}
-
 func (c *Config) GetCredentials() [][]string {
 	var credentials [][]string
-	for key, value := range c.Credentials {
+	for _, value := range c.Credentials {
 		status := inactiveEmoji
 		if value.Status {
 			status = activeEmoji
 		}
 		row := []string{
-			key,
+			value.ID,
 			fmt.Sprintf("%s...", safeTruncate(value.Key, 20)),
 			strconv.Itoa(value.Credits),
 			status,
 		}
 		credentials = append(credentials, row)
 	}
-
-	slices.SortFunc(credentials, func(a, b []string) int {
-		if a[3] != b[3] {
-			if a[3] == activeEmoji {
-				return -1
-			}
-			return 1
-		}
-		creditsA, _ := strconv.Atoi(a[2])
-		creditsB, _ := strconv.Atoi(b[2])
-		if creditsA != creditsB {
-			return creditsB - creditsA
-		}
-		return strings.Compare(a[0], b[0])
-	})
 
 	return credentials
 }
@@ -218,23 +216,10 @@ func safeTruncate(s string, n int) string {
 	return s[:n]
 }
 
-func (c *Config) GetCredential() (string, Credential, error) {
-	var foundKey string
-
+func (c *Config) GetCredential() (Credential, error) {
 	if len(c.Credentials) == 0 {
-		return "", Credential{}, fmt.Errorf("no credentials found")
+		return Credential{}, fmt.Errorf("no credentials found")
 	}
 
-	for key, value := range c.Credentials {
-		if value.Status {
-			foundKey = key
-			break
-		}
-	}
-
-	if foundKey == "" {
-		return "", Credential{}, fmt.Errorf("no active credential found")
-	}
-
-	return foundKey, c.Credentials[foundKey], nil
+	return c.Credentials[0], nil
 }
