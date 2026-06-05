@@ -74,7 +74,7 @@ func HandlerCompress(s *state, cmd command) error {
 
 	pdfsChannel := make(chan PDFsConfig)
 	var wg errgroup.Group
-	for range 3 {
+	for range 2 {
 		wg.Go(func() error {
 			for pdf := range pdfsChannel {
 				err := func(pdf PDFsConfig) error {
@@ -86,14 +86,6 @@ func HandlerCompress(s *state, cmd command) error {
 					if err != nil {
 						return err
 					}
-					// if startResponse.RemainingCredits < compressCost {
-					// 	startResponse, err = changeKey(s, ila, func() (iloveapi.StartResponse, error) {
-					// 		return ila.Start(context.Background(), iloveapi.StartParams{Tool: toolCompress, Region: region})
-					// 	})
-					// 	if err != nil {
-					// 		return err
-					// 	}
-					// }
 
 					pdfFile := filepath.Join(pdf.Path, pdf.Filename)
 					file, err := os.Open(pdfFile)
@@ -209,53 +201,24 @@ func callWithRetry[T any](s *state, ila *iloveapi.Client, apiFunc func() (T, err
 	}
 
 	var apiErr *iloveapi.APIError
-	if errors.As(err, &apiErr) {
-		if apiErr.StatusCode() == 401 {
-			err := ila.GenerateToken(context.Background())
-			if err != nil {
-				var zero T
-				return zero, fmt.Errorf("failed to refresh token: %w", err)
-			}
-
-			token := ila.GetToken()
-			fmt.Println(token)
-
-			return apiFunc()
+	if errors.As(err, &apiErr) && apiErr.StatusCode() == 404 {
+		fmt.Printf("%+v\n", response)
+	}
+	if errors.As(err, &apiErr) && apiErr.StatusCode() == 401 {
+		err := ila.GenerateToken(context.Background())
+		if err != nil {
+			var zero T
+			return zero, fmt.Errorf("failed to refresh token: %w", err)
 		}
+
+		token := ila.GetToken()
+		fmt.Println(token)
+
+		return apiFunc()
 	}
 
 	return response, err
 }
-
-// func changeKey(s *state, ila *iloveapi.Client, startFunc func() (iloveapi.StartResponse, error)) (iloveapi.StartResponse, error) {
-// 	s.mu.Lock()
-// 	defer s.mu.Unlock()
-
-// 	credentials := s.cfg.GetCredentials()
-// 	if len(credentials) < 1 {
-// 		return iloveapi.StartResponse{}, ErrInsufficientCredits
-// 	}
-
-// 	credits, _ := strconv.Atoi(credentials[1][2])
-// 	if credits < compressCost {
-// 		return iloveapi.StartResponse{}, ErrInsufficientCredits
-// 	}
-
-// 	key := credentials[1][1]
-// 	s.cfg.ActivateCredential(key)
-
-// 	refreshErr := ila.GenerateToken(context.Background(), key)
-// 	if refreshErr != nil {
-// 		return iloveapi.StartResponse{}, fmt.Errorf("failed to refresh token: %w", refreshErr)
-// 	}
-
-// 	startReponse, err := startFunc()
-// 	if err != nil {
-// 		return iloveapi.StartResponse{}, err
-// 	}
-
-// 	return startReponse, nil
-// }
 
 func initConfig(s *state, cmd command, cfgFile string) error {
 	if _, err := os.Stat(cfgFile); !errors.Is(err, os.ErrNotExist) {
