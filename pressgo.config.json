@@ -1,30 +1,44 @@
 [
   {
-    "filename": "comision copy 2.pdf",
-    "new_name": "comision-copy-2.pdf",
-    "title": "franco",
-    "author": "fer",
+    "filename": "comision.pdf",
+    "new_name": "comision.pdf",
+    "title": "comision",
+    "author": "fernando",
     "path": "/home/uaeh/workspace/pressgo"
   },
   {
-    "filename": "comision copy 3.pdf",
-    "new_name": "comision-copy-3.pdf",
-    "title": "franco",
-    "author": "fer",
+    "filename": "comision1.pdf",
+    "new_name": "comision1.pdf",
+    "title": "comision1",
+    "author": "fernando",
     "path": "/home/uaeh/workspace/pressgo"
   },
   {
-    "filename": "comision copy.pdf",
-    "new_name": "comision-copy.pdf",
-    "title": "franco",
-    "author": "fer",
+    "filename": "comision2.pdf",
+    "new_name": "comision2.pdf",
+    "title": "comision2",
+    "author": "fernando",
     "path": "/home/uaeh/workspace/pressgo"
   },
   {
     "filename": "comision.pdf",
     "new_name": "comision.pdf",
-    "title": "franco",
-    "author": "fer",
-    "path": "/home/uaeh/workspace/pressgo"
+    "title": "comision",
+    "author": "fernando",
+    "path": "/home/uaeh/workspace/pressgo/compress"
+  },
+  {
+    "filename": "comision1.pdf",
+    "new_name": "comision1.pdf",
+    "title": "comision1",
+    "author": "fernando",
+    "path": "/home/uaeh/workspace/pressgo/compress"
+  },
+  {
+    "filename": "comision2.pdf",
+    "new_name": "comision2.pdf",
+    "title": "comision2",
+    "author": "fernando",
+    "path": "/home/uaeh/workspace/pressgo/compress"
   }
 ]

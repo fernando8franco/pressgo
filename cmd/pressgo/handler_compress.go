@@ -233,8 +233,8 @@ func initConfig(s *state, cmd command, cfgFile string) error {
 		}
 	}
 
-	title := cmd.Arguments[1]
-	author := cmd.Arguments[0]
+	title := cmd.Arguments[0]
+	author := cmd.Arguments[1]
 
 	err := generateConfigPdfsFile(s.wdir, cfgFile, title, author)
 	if err != nil {
