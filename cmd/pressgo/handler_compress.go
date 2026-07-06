@@ -74,7 +74,7 @@ func HandlerCompress(s *state, cmd command) error {
 
 	pdfsChannel := make(chan PDFsConfig)
 	var wg errgroup.Group
-	for range 2 {
+	for range 3 {
 		wg.Go(func() error {
 			for pdf := range pdfsChannel {
 				err := func(pdf PDFsConfig) error {
@@ -212,12 +212,29 @@ func callWithRetry[T any](s *state, ila *iloveapi.Client, apiFunc func() (T, err
 		}
 
 		token := ila.GetToken()
-		fmt.Println(token)
+		err = updateConfigToken(s, token)
+		if err != nil {
+			var zero T
+			return zero, fmt.Errorf("failed to update the config token: %w", err)
+		}
 
 		return apiFunc()
 	}
 
 	return response, err
+}
+
+func updateConfigToken(s *state, token string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if cred, err := s.cfg.GetCredential(); err != nil {
+		return err
+	} else if cred.Token == token {
+		return nil
+	}
+
+	return s.cfg.UpdateTokenCredential(token)
 }
 
 func initConfig(s *state, cmd command, cfgFile string) error {

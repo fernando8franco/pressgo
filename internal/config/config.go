@@ -223,3 +223,25 @@ func (c *Config) GetCredential() (Credential, error) {
 
 	return c.Credentials[0], nil
 }
+
+func (c *Config) updateTokenCredential(configFilePath, token string) error {
+	if len(c.Credentials) == 0 {
+		return fmt.Errorf("no credentials found")
+	}
+	if token == "" {
+		return fmt.Errorf("The token can't be empty")
+	}
+
+	c.Credentials[0].Token = token
+
+	return write(configFilePath, *c)
+}
+
+func (c *Config) UpdateTokenCredential(token string) error {
+	configFilePath, err := getConfigFilePath()
+	if err != nil {
+		return err
+	}
+
+	return c.updateTokenCredential(configFilePath, token)
+}

@@ -415,3 +415,57 @@ func TestGetCredential(t *testing.T) {
 		t.Errorf("Config mismatch.\nGot:  %+v\nWant: %+v", got, expected)
 	}
 }
+
+func TestUpdateTokenCredential(t *testing.T) {
+	credential := Credential{ID: "test1", Key: "key", Token: "token-123", Credits: 100, Status: true}
+
+	updateToken := "token-456"
+	updatedCredential := Credential{ID: "test1", Key: "key", Token: updateToken, Credits: 100, Status: true}
+
+	tests := []struct {
+		name        string
+		config      Config
+		expectedErr bool
+		token       string
+		expected    Config
+	}{
+		{
+			name:        "update token credential",
+			config:      Config{Credentials: []Credential{credential}},
+			expectedErr: false,
+			token:       updateToken,
+			expected:    Config{Credentials: []Credential{updatedCredential}},
+		},
+		{
+			name:        "invalid credential",
+			config:      Config{Credentials: []Credential{}},
+			expectedErr: true,
+		},
+		{
+			name:        "invalid token",
+			config:      Config{Credentials: []Credential{credential}},
+			expectedErr: true,
+			token:       "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), configFileName)
+
+			err := tt.config.updateTokenCredential(path, tt.token)
+			if tt.expectedErr {
+				if err == nil {
+					t.Fatal("expected an error but got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !reflect.DeepEqual(tt.config, tt.expected) {
+				t.Errorf("\ngot %+v,\nwant %+v", tt.config, tt.expected)
+			}
+		})
+	}
+}
