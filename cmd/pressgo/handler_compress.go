@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/fernando8franco/pressgo/pkg/pdfs"
 	"github.com/fernando8franco/pressgo/pkg/slug"
@@ -23,6 +24,12 @@ import (
 var (
 	ErrInsufficientCredits = errors.New("insufficient credits for this operation")
 )
+
+type CreditsUpdate struct {
+	Credits   int
+	Requested time.Time
+	Err       error
+}
 
 func HandlerCompress(s *state, cmd command) error {
 	fs := flag.NewFlagSet(cmd.Name, flag.ExitOnError)
@@ -73,6 +80,7 @@ func HandlerCompress(s *state, cmd command) error {
 	ila.SetToken(credential.Token)
 
 	pdfsChannel := make(chan PDFsConfig)
+	// creditsChannel := make(chan<- CreditsUpdate)
 	var wg errgroup.Group
 	for range 3 {
 		wg.Go(func() error {
@@ -179,6 +187,10 @@ func HandlerCompress(s *state, cmd command) error {
 			pdfsChannel <- info
 		}
 	}()
+
+	// go func() {
+	// 	for credit := range
+	// }()
 
 	if err := wg.Wait(); err != nil {
 		return err
