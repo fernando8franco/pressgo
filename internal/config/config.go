@@ -245,3 +245,7 @@ func (c *Config) UpdateTokenCredential(token string) error {
 
 	return c.updateTokenCredential(configFilePath, token)
 }
+
+func (c *Config) GetTokenCredential() string {
+	return c.Credentials[0].Token
+}

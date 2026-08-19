@@ -469,3 +469,30 @@ func TestUpdateTokenCredential(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTokenCredential(t *testing.T) {
+	credential := Credential{ID: "test1", Key: "key", Token: "token-123", Credits: 100, Status: true}
+
+	tests := []struct {
+		name        string
+		config      Config
+		expectedErr bool
+		expected    string
+	}{
+		{
+			name:        "get token credential",
+			config:      Config{Credentials: []Credential{credential}},
+			expectedErr: false,
+			expected:    "token-123",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			token := tt.config.GetTokenCredential()
+			if token != tt.expected {
+				t.Errorf("\ngot %v,\nwant %v", token, tt.expected)
+			}
+		})
+	}
+}

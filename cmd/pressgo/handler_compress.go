@@ -77,10 +77,8 @@ func HandlerCompress(s *state, cmd command) error {
 		return err
 	}
 	ila := iloveapi.NewClient(client, credential.Key)
-	ila.SetToken(credential.Token)
 
 	pdfsChannel := make(chan PDFsConfig)
-	// creditsChannel := make(chan<- CreditsUpdate)
 	var wg errgroup.Group
 	for range 3 {
 		wg.Go(func() error {
@@ -188,10 +186,6 @@ func HandlerCompress(s *state, cmd command) error {
 		}
 	}()
 
-	// go func() {
-	// 	for credit := range
-	// }()
-
 	if err := wg.Wait(); err != nil {
 		return err
 	}
@@ -217,14 +211,7 @@ func callWithRetry[T any](s *state, ila *iloveapi.Client, apiFunc func() (T, err
 		fmt.Printf("%+v\n", response)
 	}
 	if errors.As(err, &apiErr) && apiErr.StatusCode() == 401 {
-		err := ila.GenerateToken(context.Background())
-		if err != nil {
-			var zero T
-			return zero, fmt.Errorf("failed to refresh token: %w", err)
-		}
-
-		token := ila.GetToken()
-		err = updateConfigToken(s, token)
+		err = updateConfigToken(s, ila)
 		if err != nil {
 			var zero T
 			return zero, fmt.Errorf("failed to update the config token: %w", err)
@@ -236,9 +223,21 @@ func callWithRetry[T any](s *state, ila *iloveapi.Client, apiFunc func() (T, err
 	return response, err
 }
 
-func updateConfigToken(s *state, token string) error {
+func updateConfigToken(s *state, ila *iloveapi.Client) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	token := ila.GetToken()
+	if token != "" && s.cfg.GetTokenCredential() == token {
+		return nil
+	}
+
+	err := ila.GenerateToken(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to refresh token: %w", err)
+	}
+
+	token = ila.GetToken()
 
 	if cred, err := s.cfg.GetCredential(); err != nil {
 		return err
