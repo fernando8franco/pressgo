@@ -78,6 +78,14 @@ func HandlerCompress(s *state, cmd command) error {
 	}
 	ila := iloveapi.NewClient(client, credential.Key)
 
+	compressPDFDirPath := filepath.Join(s.wdir, compressDir)
+	if _, err := os.Stat(compressPDFDirPath); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(compressPDFDirPath, 0755)
+		if err != nil {
+			return err
+		}
+	}
+
 	pdfsChannel := make(chan PDFsConfig)
 	var wg errgroup.Group
 	for range 3 {

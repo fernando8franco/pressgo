@@ -24,4 +24,4 @@ require (
 	golang.org/x/text v0.7.0 // indirect
 )
 
-// replace github.com/fernando8franco/i-love-api-golang => ../i-love-api-golang
+replace github.com/fernando8franco/i-love-api-golang => ../i-love-api-golang
