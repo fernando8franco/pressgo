@@ -12,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/fernando8franco/pressgo/pkg/pdfs"
@@ -70,6 +71,8 @@ func HandlerCompress(s *state, cmd command) error {
 	if err != nil {
 		return err
 	}
+	var counterPDFs atomic.Int64
+	counterPDFs.Store(int64(len(pdfs)))
 
 	client := &http.Client{}
 	credential, err := s.cfg.GetCredential()
@@ -77,14 +80,6 @@ func HandlerCompress(s *state, cmd command) error {
 		return err
 	}
 	ila := iloveapi.NewClient(client, credential.Key)
-
-	compressPDFDirPath := filepath.Join(s.wdir, compressDir)
-	if _, err := os.Stat(compressPDFDirPath); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(compressPDFDirPath, 0755)
-		if err != nil {
-			return err
-		}
-	}
 
 	pdfsChannel := make(chan PDFsConfig)
 	var wg errgroup.Group
@@ -99,6 +94,10 @@ func HandlerCompress(s *state, cmd command) error {
 					})
 					if err != nil {
 						return err
+					}
+
+					if startResponse.RemainingFiles < int(counterPDFs.Load()) {
+
 					}
 
 					pdfFile := filepath.Join(pdf.Path, pdf.Filename)
@@ -145,13 +144,14 @@ func HandlerCompress(s *state, cmd command) error {
 					if err != nil {
 						return err
 					}
-					compressPDFDirPath := filepath.Join(s.wdir, compressDir, rel)
-					if _, err := os.Stat(compressPDFDirPath); errors.Is(err, os.ErrNotExist) {
-						err := os.Mkdir(compressPDFDirPath, 0755)
-						if err != nil {
-							return err
-						}
+
+					relDir := filepath.Dir(rel)
+					compressPDFDirPath := filepath.Join(s.wdir, compressDir, relDir)
+
+					if err := os.MkdirAll(compressPDFDirPath, 0755); err != nil {
+						return err
 					}
+
 					compressPDFFilePath := filepath.Join(compressPDFDirPath, pdf.NewName)
 					out, err := os.Create(compressPDFFilePath)
 					if err != nil {
@@ -175,6 +175,7 @@ func HandlerCompress(s *state, cmd command) error {
 						return err
 					}
 
+					counterPDFs.Add(-1)
 					fmt.Println(pdf.Filename, "--- Compressed correctly")
 					return nil
 				}(pdf)
