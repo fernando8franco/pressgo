@@ -9,6 +9,7 @@ import (
 	iloveapi "github.com/fernando8franco/i-love-api-golang"
 	"github.com/fernando8franco/pressgo/internal/config"
 	"github.com/olekukonko/tablewriter"
+	"golang.org/x/sync/errgroup"
 )
 
 func HandlerCredentials(s *state, cmd command) error {
@@ -19,6 +20,7 @@ func HandlerCredentials(s *state, cmd command) error {
 		add      = fs.Bool("add", false, "Add new credential -add <id> <key>")
 		delete   = fs.Bool("delete", false, "Delete credential -delete <id>")
 		activate = fs.Bool("activate", false, "Activate credential -activate <id>")
+		update   = fs.Bool("update", false, "Update the credits of the credentials")
 	)
 	fs.Parse(cmd.Arguments)
 
@@ -68,6 +70,11 @@ func HandlerCredentials(s *state, cmd command) error {
 		s.cfg.ActivateCredential(id)
 		fmt.Printf("The credential with id: %v was activated\n", id)
 		return nil
+	}
+
+	if *update {
+		cmd.Arguments = fs.Args()
+
 	}
 
 	credentials := s.cfg.GetCredentials()
@@ -124,4 +131,55 @@ func deleteCredential(s *state, cmd command) (string, error) {
 	}
 
 	return id, nil
+}
+
+func update(s *state, cmd command) error {
+	credentials := s.cfg.Credentials
+
+	credentialChannel := make(chan config.Credential)
+
+	wg, ctx := errgroup.WithContext(context.Background())
+
+	go func() {
+		defer close(credentialChannel)
+		for _, info := range credentials {
+			select {
+			case <-ctx.Done():
+				return
+			case credentialChannel <- info:
+			}
+		}
+	}()
+
+	for range 3 {
+		wg.Go(func() error {
+			for credential := range credentialChannel {
+				api := iloveapi.NewClient(s.client, credential.Key)
+				err := api.GenerateToken(ctx)
+				if err != nil {
+					return err
+				}
+
+				start, err := api.Start(ctx, iloveapi.StartParams{Tool: toolCompress, Region: region})
+				if err != nil {
+					return err
+				}
+
+				s.mu.Lock()
+				defer s.mu.Unlock()
+				err = s.cfg.AddCredential(config.Credential{ID: id, Key: key, Token: token, Credits: credits})
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+	}
+
+	if err := wg.Wait(); err != nil {
+		return err
+	}
+
+	return nil
 }
