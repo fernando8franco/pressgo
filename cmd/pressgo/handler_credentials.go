@@ -9,8 +9,8 @@ import (
 	iloveapi "github.com/fernando8franco/i-love-api-golang"
 	"github.com/fernando8franco/pressgo/internal/config"
 	"github.com/olekukonko/tablewriter"
-	"golang.org/x/sync/errgroup"
 )
+// "golang.org/x/sync/errgroup"
 
 func HandlerCredentials(s *state, cmd command) error {
 	fs := flag.NewFlagSet(cmd.Name, flag.ExitOnError)
